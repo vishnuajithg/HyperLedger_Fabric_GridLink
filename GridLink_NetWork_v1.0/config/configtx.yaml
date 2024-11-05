@@ -1,0 +1,180 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: ../organizations/ordererOrganizations/gridlink.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer.gridlink.com:7050
+
+  - &Producer
+    Name: ProducerMSP
+    ID: ProducerMSP
+    MSPDir: ../organizations/peerOrganizations/producer.gridlink.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('ProducerMSP.admin', 'ProducerMSP.peer', 'ProducerMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('ProducerMSP.admin', 'ProducerMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('ProducerMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('ProducerMSP.peer')"
+
+  - &Consumer
+    Name: ConsumerMSP
+    ID: ConsumerMSP
+    MSPDir: ../organizations/peerOrganizations/consumer.gridlink.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('ConsumerMSP.admin', 'ConsumerMSP.peer', 'ConsumerMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('ConsumerMSP.admin', 'ConsumerMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('ConsumerMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('ConsumerMSP.peer')"
+
+  - &UtilityCompany
+    Name: UtilityCompanyMSP
+    ID: UtilityCompanyMSP
+    MSPDir: ../organizations/peerOrganizations/utilitycompany.gridlink.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('UtilityCompanyMSP.admin', 'UtilityCompanyMSP.peer', 'UtilityCompanyMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('UtilityCompanyMSP.admin', 'UtilityCompanyMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('UtilityCompanyMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('UtilityCompanyMSP.peer')"
+
+  - &RegulatoryBody
+    Name: RegulatoryBodyMSP
+    ID: RegulatoryBodyMSP
+    MSPDir: ../organizations/peerOrganizations/regulatorybody.gridlink.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('RegulatoryBodyMSP.admin', 'RegulatoryBodyMSP.peer', 'RegulatoryBodyMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('RegulatoryBodyMSP.admin', 'RegulatoryBodyMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('RegulatoryBodyMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('RegulatoryBodyMSP.peer')"
+
+        
+Capabilities:  
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_5: true
+    
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  Addresses:
+    - orderer.gridlink.com:7050
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  FourOrgsChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      OrdererType: etcdraft
+      EtcdRaft:
+        Consenters:
+          - Host: orderer.gridlink.com
+            Port: 7050
+            ClientTLSCert: ../organizations/ordererOrganizations/gridlink.com/orderers/orderer.gridlink.com/tls/server.crt
+            ServerTLSCert: ../organizations/ordererOrganizations/gridlink.com/orderers/orderer.gridlink.com/tls/server.crt
+      Organizations:
+        - *OrdererOrg
+      Capabilities: *OrdererCapabilities
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Producer
+        - *Consumer
+        - *UtilityCompany
+        - *RegulatoryBody
+      Capabilities: *ApplicationCapabilities
