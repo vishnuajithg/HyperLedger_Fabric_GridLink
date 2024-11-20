@@ -16,6 +16,8 @@ rm -rf organizations/
 
 docker ps -a
 
+#docker rm $(docker container ls -q) --force
+
 yes | docker container prune
 
 yes | docker system prune

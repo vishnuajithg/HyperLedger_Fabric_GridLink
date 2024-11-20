@@ -1,0 +1,10 @@
+[
+    {
+      "name": "EnergyTradingCollection",
+      "policy": "OR('ConsumerMSP.member', 'UtilityCompanyMSP.member')",
+      "requiredPeerCount": 1,
+      "maxPeerCount": 1,
+      "blockToLive": 100,
+      "memberOnlyRead": true
+    }
+  ]
